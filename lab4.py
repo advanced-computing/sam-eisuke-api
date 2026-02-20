@@ -7,9 +7,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def hello_world():
-    """Return a friendly HTTP greeting."""
-
-    return "<p>Hello, World!</p>"
+    return "<p>This is lab 4. Hello!</p>"
 
 
 @app.get("/api/list")
@@ -19,8 +17,8 @@ def list():
     format = request.args.get("format", "json")
     filterby = request.args.get("filterby", None)
     filtervalue = request.args.get("filtervalue", None)
-    limit = int(request.args.get("limit", 1000))
-    offset = int(request.args.get("offset", 0))
+    limit = int(request.args.get("limit", 1000)) # limit
+    offset = int(request.args.get("offset", 0)) # offset
 
     # Load the data
     data = pd.read_csv("Causes_of_Death_2026.csv")
@@ -63,6 +61,24 @@ def convert_to_format(data, format):
     else:
         return "Invalid format"
 
+@app.get("/api/record/<int:id>") # used chatgpt for <int:id>
+def index_find(id):
+    format = request.args.get("format", "json")
+    data = pd.read_csv("Causes_of_Death_2026.csv") 
+    location = data.iloc[[id]]    
+    return convert_to_format(location,format)
+
+@app.get("/api/i_want_extra_credit")
+def hehe():
+    return """<img src="/static/PLEASE.png" width="500">"""
+
+@app.get("/api/covid_death")
+def covid_death():
+    format = request.args.get("format", "json")
+    data = pd.read_csv("Causes_of_Death_2026.csv") 
+    covid_df = data[data["Leading Cause"] == "Covid-19"]
+    covid_df = covid_df.drop(columns = ["Death Rate", "Age Adjusted Death Rate"])
+    return convert_to_format(covid_df, format)
 
 if __name__ == "__main__":
     app.run(debug=True)
