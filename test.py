@@ -14,11 +14,15 @@ def deaths_by_year(data):
 def cause_share_by_year(data, year,cause):
     df = data.copy()
     year_df = df[df["Year"] == year]
-
+    if year_df.empty:
+        raise ValueError("Year not found")
+    
     total_deaths = year_df["Deaths"].sum()
 
     cause_deaths = year_df[year_df["Cause"] == cause]["Deaths"].sum()
-
+    if year_df[year_df["Cause"] == cause].empty:
+        raise ValueError("Cause not found")
+    
     return cause_deaths/total_deaths
 
 def clean_empty(data):

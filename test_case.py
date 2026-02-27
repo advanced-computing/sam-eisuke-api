@@ -24,12 +24,36 @@ def test_cause_share_by_year(): # compares number of deaths to the total
 
 def test_clean_empty(): # deletes empty rows 
     df = pd.DataFrame({
-        "Death Rate": ["ABC", None],
+        "Death Rate": [2, None],
         "Age Adjusted Death Rate": [1, "Xyz"]
 
     })
     result = clean_empty(df)
 
-    assert len(result) == 0
+    assert len(result) == 1
+
+# Edge Cases
+
+def test_deaths_by_year_empty(): #Empty Dataframe
+    df = pd.DataFrame({
+        "Year": [],
+        "Deaths": []
+    })
+    result = deaths_by_year(df)
+
+    assert result.empty
+
+def test_cause_not_found(): # When cause is not there
+    df = pd.DataFrame({
+        "Year": [2020, 2020],
+        "Cause": ["Covid-19", "All Other Causes"],
+        "Deaths": [100, 100]
+    })
+
+    result = cause_share_by_year(df, 2020, "Cancer")
+
+    with pytest.raises(ValueError):
+        cause_share_by_year(df, 2020, "Cancer")
+
 
 
