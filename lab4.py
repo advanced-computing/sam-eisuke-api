@@ -1,7 +1,8 @@
 from flask import Flask
 from flask import request
 import pandas as pd
-
+from database import connection 
+from database import create_users_table
 app = Flask(__name__)
 
 
@@ -21,7 +22,8 @@ def list():
     offset = int(request.args.get("offset", 0)) # offset
 
     # Load the data
-    data = pd.read_csv("Causes_of_Death_2026.csv")
+    con = connection()
+    data = con.sql("SELECT * FROM read_csv_auto('sam-eisuke-api/Causes_of_Death_2026.csv')").df()
 
     # filter the data
     data = filter_by_value(data, filterby, filtervalue)
@@ -82,3 +84,18 @@ def covid_death():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+create_users_table()
+@app.post("/users")
+def add_user(username: str, age: int, country: str):
+    con = connection()
+
+    con.execute(
+        "INSERT INTO users VALUES (?, ?, ?)",
+        [username, age, country]
+    )
+
+    con.close()
+
+    return {"message": "User added"}
+    
