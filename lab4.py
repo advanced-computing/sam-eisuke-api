@@ -24,8 +24,8 @@ def list():
     offset = int(request.args.get("offset", 0)) # offset
 
     # Load the data
-    con = connection()
-    data = con.sql("SELECT * FROM read_csv_auto('sam-eisuke-api/Causes_of_Death_2026.csv')").df()
+    con = duckdb.connect("file.db")
+    data = con.sql("SELECT * FROM Cause_of_Death").df()
 
     # filter the data
     data = filter_by_value(data, filterby, filtervalue)
