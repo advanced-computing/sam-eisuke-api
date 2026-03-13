@@ -1,8 +1,10 @@
 from flask import Flask
 from flask import request
+from flask import jsonify
 import pandas as pd
 from database import connection 
 from database import create_users_table
+import duckdb
 app = Flask(__name__)
 
 
@@ -82,20 +84,51 @@ def covid_death():
     covid_df = covid_df.drop(columns = ["Death Rate", "Age Adjusted Death Rate"])
     return convert_to_format(covid_df, format)
 
-if __name__ == "__main__":
-    app.run(debug=True)
-
 create_users_table()
-@app.post("/users")
-def add_user(username: str, age: int, country: str):
-    con = connection()
+@app.route("/users",methods = ["POST"])
+def add_user():
+    data = request.get_json()
+    
+    username = data.get("username")
+    age = data.get("age")
+    country = data.get("country")
+
+    con = duckdb.connect("file.db")
 
     con.execute(
-        "INSERT INTO users VALUES (?, ?, ?)",
-        [username, age, country]
+        "INSERT INTO users (username, age, country) VALUES (?, ?, ?)",
+        [username, age, country],
     )
+    con.close()
+    return jsonify({"message": f"PUser '{username}' added"})
+
+@app.route("/users/stats", methods=["GET"])
+def get_user_stats():
+
+    con = duckdb.connect("file.db")
+
+    count = con.sql("SELECT COUNT(*) FROM users").fetchone()[0]
+
+    avg_age = con.sql("SELECT AVG(age) FROM users").fetchone()[0]
+
+    top_countries = con.sql("""
+        SELECT country, COUNT(*) as total
+        FROM users
+        GROUP BY country
+        ORDER BY total DESC
+        LIMIT 3
+    """).fetchall()
 
     con.close()
 
-    return {"message": "User added"}
+    return {
+        "num_users": count,
+        "average_age": round(avg_age, 2) if avg_age else None,
+        "Top_3_countries": [
+            {"country": r[0], "count": r[1]} for r in top_countries
+        ]
+    }
     
+
+if __name__ == "__main__":
+    app.run(debug=True)
